@@ -46,7 +46,7 @@ def main_callback(
             envvar="MIVIA_PROXY",
         ),
     ] = None,
-):
+) -> None:
     """MiViA API client CLI."""
     cli_state.proxy = proxy
 
@@ -66,7 +66,7 @@ def handle_error(e: MiviaError) -> None:
 
 
 @app.command()
-def models():
+def models() -> None:
     """List available models."""
     try:
         client = get_client()
@@ -97,7 +97,7 @@ def models():
 @app.command()
 def customizations(
     model_id: Annotated[str, typer.Argument(help="Model UUID")],
-):
+) -> None:
     """List customizations for a model."""
     try:
         client = get_client()
@@ -130,8 +130,10 @@ def customizations(
 @app.command()
 def upload(
     files: Annotated[list[Path], typer.Argument(help="Image files to upload")],
-    forced: Annotated[bool, typer.Option("--forced", "-f", help="Bypass quality check")] = False,
-):
+    forced: Annotated[
+        bool, typer.Option("--forced", "-f", help="Bypass quality check")
+    ] = False,
+) -> None:
     """Upload image(s)."""
     try:
         client = get_client()
@@ -162,7 +164,7 @@ def upload(
 
 
 @app.command()
-def images():
+def images() -> None:
     """List uploaded images."""
     try:
         client = get_client()
@@ -243,8 +245,9 @@ def resolve_customization(
             return c.id
 
     # Partial match
+    cust_lower = customization.lower()
     for c in customs:
-        if customization.lower() in c.name.en.lower() or customization.lower() in c.name.de.lower():
+        if cust_lower in c.name.en.lower() or cust_lower in c.name.de.lower():
             return c.id
 
     rprint(f"[red]Error:[/red] Customization '{customization}' not found")
@@ -258,12 +261,22 @@ def resolve_customization(
 @app.command()
 def analyze(
     files: Annotated[list[Path], typer.Argument(help="Image files to analyze")],
-    model: Annotated[str, typer.Option("--model", "-m", help="Model UUID or name")] = None,
-    customization: Annotated[str, typer.Option("--customization", "-c", help="Customization UUID or name")] = None,
-    list_customizations: Annotated[bool, typer.Option("--list-customizations", "-l", help="List available customizations")] = False,
-    no_wait: Annotated[bool, typer.Option("--no-wait", help="Don't wait for completion")] = False,
-    timeout: Annotated[float, typer.Option("--timeout", "-t", help="Wait timeout in seconds")] = 300.0,
-):
+    model: Annotated[
+        str | None, typer.Option("--model", "-m", help="Model UUID or name")
+    ] = None,
+    customization: Annotated[
+        str | None, typer.Option("--customization", "-c", help="Customization UUID")
+    ] = None,
+    list_customizations: Annotated[
+        bool, typer.Option("--list-customizations", "-l", help="List customizations")
+    ] = False,
+    no_wait: Annotated[
+        bool, typer.Option("--no-wait", help="Don't wait for completion")
+    ] = False,
+    timeout: Annotated[
+        float, typer.Option("--timeout", "-t", help="Wait timeout in seconds")
+    ] = 300.0,
+) -> None:
     """Upload images and run analysis."""
     if not model:
         rprint("[red]Error:[/red] --model is required")
@@ -327,10 +340,12 @@ def analyze(
 
 @jobs_app.command("list")
 def jobs_list(
-    model: Annotated[str, typer.Option("--model", "-m", help="Filter by model UUID")] = None,
+    model: Annotated[
+        str | None, typer.Option("--model", "-m", help="Filter by model UUID")
+    ] = None,
     page: Annotated[int, typer.Option("--page", "-p", help="Page number")] = 1,
     size: Annotated[int, typer.Option("--size", "-s", help="Page size")] = 10,
-):
+) -> None:
     """List jobs."""
     try:
         client = get_client()
@@ -338,9 +353,8 @@ def jobs_list(
 
         result = client.list_jobs(model_id=model_id, page=page, page_size=size)
 
-        table = Table(
-            title=f"Jobs (Page {result.pagination.page}/{result.pagination.total_pages})"
-        )
+        pg = result.pagination
+        table = Table(title=f"Jobs (Page {pg.page}/{pg.total_pages})")
         table.add_column("ID", style="dim")
         table.add_column("Image")
         table.add_column("Status")
@@ -370,7 +384,7 @@ def jobs_list(
 @jobs_app.command("get")
 def jobs_get(
     job_id: Annotated[str, typer.Argument(help="Job UUID")],
-):
+) -> None:
     """Get job details."""
     try:
         client = get_client()
@@ -384,7 +398,7 @@ def jobs_get(
         rprint(f"[bold]Created:[/bold] {job.created_at}")
 
         if job.results:
-            rprint(f"\n[bold]Results:[/bold]")
+            rprint("\n[bold]Results:[/bold]")
             for i, r in enumerate(job.results):
                 rprint(f"  {i + 1}. {r}")
     except MiviaError as e:
@@ -394,9 +408,13 @@ def jobs_get(
 @jobs_app.command("wait")
 def jobs_wait(
     job_ids: Annotated[list[str], typer.Argument(help="Job UUIDs")],
-    timeout: Annotated[float, typer.Option("--timeout", "-t", help="Timeout in seconds")] = 300.0,
-    interval: Annotated[float, typer.Option("--interval", "-i", help="Poll interval")] = 2.0,
-):
+    timeout: Annotated[
+        float, typer.Option("--timeout", "-t", help="Timeout in seconds")
+    ] = 300.0,
+    interval: Annotated[
+        float, typer.Option("--interval", "-i", help="Poll interval")
+    ] = 2.0,
+) -> None:
     """Wait for job(s) to complete."""
     try:
         client = get_client()
@@ -419,14 +437,16 @@ def jobs_wait(
 @report_app.command("pdf")
 def report_pdf(
     job_ids: Annotated[list[str], typer.Argument(help="Job UUIDs")],
-    output: Annotated[Path, typer.Option("--output", "-o", help="Output file path")] = Path("report.pdf"),
-):
+    output: Annotated[
+        Path, typer.Option("--output", "-o", help="Output file path")
+    ] = Path("report.pdf"),
+) -> None:
     """Download PDF report."""
     try:
         client = get_client()
         uuids = [UUID(jid) for jid in job_ids]
 
-        rprint(f"[blue]Generating PDF report...[/blue]")
+        rprint("[blue]Generating PDF report...[/blue]")
         path = client.download_pdf(uuids, output)
         rprint(f"[green]Saved to:[/green] {path}")
     except MiviaError as e:
@@ -436,15 +456,19 @@ def report_pdf(
 @report_app.command("csv")
 def report_csv(
     job_ids: Annotated[list[str], typer.Argument(help="Job UUIDs")],
-    output: Annotated[Path, typer.Option("--output", "-o", help="Output file path")] = Path("report.zip"),
-    no_images: Annotated[bool, typer.Option("--no-images", help="Exclude images")] = False,
-):
+    output: Annotated[
+        Path, typer.Option("--output", "-o", help="Output file path")
+    ] = Path("report.zip"),
+    no_images: Annotated[
+        bool, typer.Option("--no-images", help="Exclude images")
+    ] = False,
+) -> None:
     """Download CSV report (as ZIP)."""
     try:
         client = get_client()
         uuids = [UUID(jid) for jid in job_ids]
 
-        rprint(f"[blue]Generating CSV report...[/blue]")
+        rprint("[blue]Generating CSV report...[/blue]")
         path = client.download_csv(uuids, output, include_images=not no_images)
         rprint(f"[green]Saved to:[/green] {path}")
     except MiviaError as e:
@@ -455,14 +479,15 @@ def report_csv(
 
 
 @app.command()
-def config():
+def config() -> None:
     """Show current configuration."""
     api_key = os.environ.get("MIVIA_API_KEY", "")
     base_url = os.environ.get("MIVIA_BASE_URL", "https://app.mivia.ai/api")
     proxy = cli_state.proxy or os.environ.get("MIVIA_PROXY", "")
 
     rprint("[bold]Configuration:[/bold]")
-    rprint(f"  MIVIA_API_KEY: {'***' + api_key[-4:] if api_key else '[red]Not set[/red]'}")
+    key_display = "***" + api_key[-4:] if api_key else "[red]Not set[/red]"
+    rprint(f"  MIVIA_API_KEY: {key_display}")
     rprint(f"  MIVIA_BASE_URL: {base_url}")
     rprint(f"  MIVIA_PROXY: {proxy if proxy else '[dim]Not set[/dim]'}")
 

@@ -52,9 +52,7 @@ class MiviaClient:
             raise AuthenticationError("API key required. Set MIVIA_API_KEY env var.")
 
         self._base_url = (
-            base_url
-            or os.environ.get("MIVIA_BASE_URL")
-            or "https://app.mivia.ai/api"
+            base_url or os.environ.get("MIVIA_BASE_URL") or "https://app.mivia.ai/api"
         )
         self._timeout = timeout
         self._proxy = proxy or os.environ.get("MIVIA_PROXY")
@@ -199,9 +197,7 @@ class MiviaClient:
         self._handle_response(response)
         return [ModelDto.model_validate(m) for m in response.json()]
 
-    async def get_model_customizations(
-        self, model_id: UUID
-    ) -> list[CustomizationDto]:
+    async def get_model_customizations(self, model_id: UUID) -> list[CustomizationDto]:
         """
         Get customizations for a model.
 
@@ -348,10 +344,7 @@ class MiviaClient:
         Returns:
             List of completed job DTOs.
         """
-        tasks = [
-            self.wait_for_job(jid, timeout, poll_interval)
-            for jid in job_ids
-        ]
+        tasks = [self.wait_for_job(jid, timeout, poll_interval) for jid in job_ids]
         return await asyncio.gather(*tasks)
 
     # --- Report Operations ---

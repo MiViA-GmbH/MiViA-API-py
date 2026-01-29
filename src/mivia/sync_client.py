@@ -214,9 +214,7 @@ class SyncMiviaClient:
         Raises:
             JobTimeoutError: If timeout exceeded.
         """
-        return self._run(
-            self._execute("wait_for_job", job_id, timeout, poll_interval)
-        )
+        return self._run(self._execute("wait_for_job", job_id, timeout, poll_interval))
 
     def wait_for_jobs(
         self,
@@ -258,9 +256,7 @@ class SyncMiviaClient:
         Returns:
             Path to saved file.
         """
-        return self._run(
-            self._execute("download_pdf", job_ids, output_path, tz_offset)
-        )
+        return self._run(self._execute("download_pdf", job_ids, output_path, tz_offset))
 
     def download_csv(
         self,
