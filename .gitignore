@@ -27,3 +27,7 @@ htmlcov/
 # Misc
 *.log
 .DS_Store
+
+# Node.js
+node_modules/
+package-lock.json

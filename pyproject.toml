@@ -37,6 +37,7 @@ dev = [
     "pytest-httpx>=0.30.0",
     "ruff>=0.4.0",
     "mypy>=1.10.0",
+    "lefthook>=1.10.0",
 ]
 
 [project.urls]
