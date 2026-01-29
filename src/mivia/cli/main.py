@@ -27,9 +27,33 @@ app.add_typer(report_app, name="report")
 console = Console()
 
 
+class CLIState:
+    """Global CLI state."""
+
+    proxy: str | None = None
+
+
+cli_state = CLIState()
+
+
+@app.callback()
+def main_callback(
+    proxy: Annotated[
+        str | None,
+        typer.Option(
+            "--proxy",
+            help="Proxy URL (e.g., http://proxy:8080)",
+            envvar="MIVIA_PROXY",
+        ),
+    ] = None,
+):
+    """MiViA API client CLI."""
+    cli_state.proxy = proxy
+
+
 def get_client() -> SyncMiviaClient:
     """Get configured client."""
-    return SyncMiviaClient()
+    return SyncMiviaClient(proxy=cli_state.proxy)
 
 
 def handle_error(e: MiviaError) -> None:
@@ -435,10 +459,12 @@ def config():
     """Show current configuration."""
     api_key = os.environ.get("MIVIA_API_KEY", "")
     base_url = os.environ.get("MIVIA_BASE_URL", "https://app.mivia.ai/api")
+    proxy = cli_state.proxy or os.environ.get("MIVIA_PROXY", "")
 
     rprint("[bold]Configuration:[/bold]")
     rprint(f"  MIVIA_API_KEY: {'***' + api_key[-4:] if api_key else '[red]Not set[/red]'}")
     rprint(f"  MIVIA_BASE_URL: {base_url}")
+    rprint(f"  MIVIA_PROXY: {proxy if proxy else '[dim]Not set[/dim]'}")
 
 
 if __name__ == "__main__":

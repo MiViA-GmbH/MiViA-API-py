@@ -22,6 +22,7 @@ class SyncMiviaClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: float = 30.0,
+        proxy: str | None = None,
     ):
         """
         Initialize sync MiViA client.
@@ -30,10 +31,12 @@ class SyncMiviaClient:
             api_key: API key. If None, reads from MIVIA_API_KEY env var.
             base_url: Base URL. If None, reads from MIVIA_BASE_URL or uses default.
             timeout: Request timeout in seconds.
+            proxy: Proxy URL. If None, reads from MIVIA_PROXY env var.
         """
         self._api_key = api_key
         self._base_url = base_url
         self._timeout = timeout
+        self._proxy = proxy
 
     def _run(self, coro):
         """Run coroutine in event loop."""
@@ -45,6 +48,7 @@ class SyncMiviaClient:
             api_key=self._api_key,
             base_url=self._base_url,
             timeout=self._timeout,
+            proxy=self._proxy,
         ) as client:
             method = getattr(client, method_name)
             return await method(*args, **kwargs)

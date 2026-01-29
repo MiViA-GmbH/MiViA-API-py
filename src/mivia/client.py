@@ -36,6 +36,7 @@ class MiviaClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: float = 30.0,
+        proxy: str | None = None,
     ):
         """
         Initialize MiViA client.
@@ -44,6 +45,7 @@ class MiviaClient:
             api_key: API key. If None, reads from MIVIA_API_KEY env var.
             base_url: Base URL. If None, reads from MIVIA_BASE_URL or uses default.
             timeout: Request timeout in seconds.
+            proxy: Proxy URL. If None, reads from MIVIA_PROXY env var.
         """
         self._api_key = api_key or os.environ.get("MIVIA_API_KEY")
         if not self._api_key:
@@ -55,6 +57,7 @@ class MiviaClient:
             or "https://app.mivia.ai/api"
         )
         self._timeout = timeout
+        self._proxy = proxy or os.environ.get("MIVIA_PROXY")
         self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> Self:
@@ -63,6 +66,7 @@ class MiviaClient:
             base_url=self._base_url,
             headers={"Authorization": self._api_key},
             timeout=self._timeout,
+            proxy=self._proxy,
         )
         return self
 

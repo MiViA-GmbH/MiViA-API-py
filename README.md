@@ -16,12 +16,14 @@ For linux:
 ```bash
 export MIVIA_API_KEY="your-api-key"
 export MIVIA_BASE_URL="https://app.mivia.ai/api"  # optional, default
+export MIVIA_PROXY="http://proxy:8080"  # optional, proxy URL
 ```
 
 For Windows (Powershell):
 ```powershell
 $env:MIVIA_API_KEY = 'your-api-key'
 $env:MIVIA_BASE_URL = 'https://app.mivia.ai/api'  # optional, default
+$env:MIVIA_PROXY = 'http://proxy:8080'  # optional, proxy URL
 ```
 
 
@@ -124,7 +126,55 @@ mivia report csv JOB_UUID -o report.zip --no-images
 
 # Show config
 mivia config
+
+# Use proxy
+mivia --proxy http://proxy:8080 models
 ```
+
+## Proxy Configuration
+
+Proxy can be configured via parameter, CLI option, or environment variable.
+
+### Library
+
+```python
+from mivia import MiviaClient, SyncMiviaClient
+
+# Via parameter (highest priority)
+async with MiviaClient(proxy="http://proxy:8080") as client:
+    models = await client.list_models()
+
+# Sync client
+client = SyncMiviaClient(proxy="http://proxy:8080")
+models = client.list_models()
+
+# Via environment variable (MIVIA_PROXY)
+# export MIVIA_PROXY="http://proxy:8080"
+async with MiviaClient() as client:
+    models = await client.list_models()
+```
+
+### CLI
+
+```bash
+# Via --proxy option
+mivia --proxy http://proxy:8080 models
+mivia --proxy http://proxy:8080 analyze image.png --model "Decarburization"
+
+# Via environment variable
+export MIVIA_PROXY="http://proxy:8080"
+mivia models
+
+# Verify proxy configuration
+mivia --proxy http://proxy:8080 config
+```
+
+### Priority Order
+
+1. Explicit `proxy` parameter / CLI `--proxy` option
+2. `MIVIA_PROXY` environment variable
+3. Standard proxy env vars (`HTTP_PROXY`, `HTTPS_PROXY`) via httpx defaults
+4. No proxy (direct connection)
 
 ## API Reference
 
