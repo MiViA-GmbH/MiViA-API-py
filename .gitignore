@@ -28,6 +28,7 @@ htmlcov/
 *.log
 .DS_Store
 
+CONTRIBUTION.md
 # Node.js
 node_modules/
 package-lock.json
