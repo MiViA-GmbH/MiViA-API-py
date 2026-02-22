@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class JobStatus(str, Enum):
@@ -133,12 +133,22 @@ class JobDto(BaseModel):
     has_results: bool | None = Field(None, alias="hasResults")  # Only in GET /v2/jobs
     outdated: bool
     created_at: datetime = Field(alias="createdAt")
+    started_at: datetime | None = Field(None, alias="startedAt")
+    finished_at: datetime | None = Field(None, alias="finishedAt")
     image: str | None = None  # Only in GET /v2/jobs
     results: list[Any] | None = None
     user_feedback: JobFeedbackDto | None = Field(None, alias="userFeedback")
     masks: list[JobMaskDto] | None = None
     customization: JobCustomizationDto | None = None
     with_masks: bool = Field(alias="withMasks")
+
+    @field_validator("customization", mode="before")
+    @classmethod
+    def empty_dict_to_none(cls, v: Any) -> Any:
+        """Convert empty dict to None for customization field."""
+        if isinstance(v, dict) and not v:
+            return None
+        return v
 
 
 class PaginationDto(BaseModel):
