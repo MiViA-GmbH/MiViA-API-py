@@ -442,6 +442,30 @@ def jobs_list(
         handle_error(e)
 
 
+@jobs_app.command("recent-ids")
+def jobs_recent_ids(
+    since: Annotated[
+        str, typer.Option("--since", "-s", help="Duration (e.g. 1h, 30m, 2d)")
+    ] = "1h",
+    model: Annotated[
+        str | None, typer.Option("--model", "-m", help="Filter by model UUID or name")
+    ] = None,
+) -> None:
+    """Get IDs of recently created jobs (one per line, pipeable)."""
+    try:
+        client = get_client()
+
+        model_id = None
+        if model:
+            model_id = resolve_model(client, model)
+
+        ids = client.get_recent_job_ids(since=since, model_id=model_id)
+        for job_id in ids:
+            typer.echo(str(job_id))
+    except MiviaError as e:
+        handle_error(e)
+
+
 @jobs_app.command("get")
 def jobs_get(
     job_id: Annotated[str, typer.Argument(help="Job UUID")],

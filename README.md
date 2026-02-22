@@ -139,6 +139,10 @@ mivia jobs list --model "Grain Size" --all
 mivia jobs list --model "Grain Size" --status FAILED --all
 mivia jobs list --model "Grain Size" --status PENDING,FAILED --all
 
+# Get recent job IDs (pipeable)
+mivia jobs recent-ids --since 1h
+mivia jobs recent-ids --since 2d --model "Grain Size"
+
 # Get job details
 mivia jobs get JOB_UUID
 
@@ -215,6 +219,7 @@ mivia --proxy http://proxy:8080 config
 | `delete_image(id)` | Delete image |
 | `list_models()` | List available models |
 | `get_model_customizations(id)` | Get model customizations |
+| `get_recent_job_ids(since, model_id)` | Get IDs of recently created jobs |
 | `create_jobs(image_ids, model_id)` | Create computation jobs |
 | `get_job(id)` | Get job details with results |
 | `list_jobs()` | List jobs with pagination |

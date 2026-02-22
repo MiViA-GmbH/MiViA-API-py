@@ -170,6 +170,23 @@ class SyncMiviaClient:
         """
         return self._run(self._execute("get_job", job_id))
 
+    def get_recent_job_ids(
+        self,
+        since: str = "1h",
+        model_id: UUID | None = None,
+    ) -> list[UUID]:
+        """
+        Get IDs of recently created jobs.
+
+        Args:
+            since: Duration string (e.g. "1h", "30m", "2d").
+            model_id: Optional filter by model.
+
+        Returns:
+            List of job UUIDs.
+        """
+        return self._run(self._execute("get_recent_job_ids", since, model_id))
+
     def list_jobs(
         self,
         model_id: UUID | None = None,

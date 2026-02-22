@@ -261,6 +261,33 @@ class MiviaClient:
         self._handle_response(response)
         return JobDto.model_validate(response.json())
 
+    async def get_recent_job_ids(
+        self,
+        since: str = "1h",
+        model_id: UUID | None = None,
+    ) -> list[UUID]:
+        """
+        Get IDs of recently created jobs.
+
+        Args:
+            since: Duration string (e.g. "1h", "30m", "2d").
+            model_id: Optional filter by model.
+
+        Returns:
+            List of job UUIDs.
+        """
+        client = self._ensure_client()
+
+        params: dict = {"idOnly": "true", "source": "API", "since": since}
+        if model_id:
+            params["modelId"] = str(model_id)
+
+        response = await client.get("/jobs", params=params)
+        self._handle_response(response)
+
+        data = response.json()
+        return [UUID(item["id"]) for item in data["jobs"]]
+
     async def list_jobs(
         self,
         model_id: UUID | None = None,
