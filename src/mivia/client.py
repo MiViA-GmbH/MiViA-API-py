@@ -297,6 +297,52 @@ class MiviaClient:
         self._handle_response(response)
         return JobListResponse.model_validate(response.json())
 
+    async def list_all_jobs(
+        self,
+        model_id: UUID | None = None,
+        status: JobStatus | list[JobStatus] | None = None,
+        sort_by: str = "createdAt",
+        sort_order: str = "desc",
+        page_size: int = 100,
+    ) -> list[JobDto]:
+        """
+        List all jobs with automatic pagination.
+
+        Args:
+            model_id: Optional filter by model.
+            status: Optional filter by status (single or list).
+            sort_by: Sort field.
+            sort_order: Sort order (asc/desc).
+            page_size: Items per page for pagination.
+
+        Returns:
+            List of all job DTOs matching criteria.
+        """
+        all_jobs: list[JobDto] = []
+        page = 1
+
+        while True:
+            response = await self.list_jobs(
+                model_id=model_id,
+                page=page,
+                page_size=page_size,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+
+            jobs = response.data
+            if status is not None:
+                statuses = [status] if isinstance(status, JobStatus) else status
+                jobs = [j for j in jobs if j.status in statuses]
+
+            all_jobs.extend(jobs)
+
+            if page >= response.pagination.total_pages:
+                break
+            page += 1
+
+        return all_jobs
+
     async def wait_for_job(
         self,
         job_id: UUID,

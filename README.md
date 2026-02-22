@@ -85,6 +85,23 @@ client.download_csv(
     job_ids=[j.id for j in jobs],
     output_path="report.zip",
 )
+
+# List all jobs for a model
+from mivia import JobStatus
+
+all_jobs = client.list_all_jobs(model_id=models[0].id)
+
+# Filter by status
+failed_jobs = client.list_all_jobs(
+    model_id=models[0].id,
+    status=JobStatus.FAILED,
+)
+
+# Filter by multiple statuses
+active_jobs = client.list_all_jobs(
+    model_id=models[0].id,
+    status=[JobStatus.PENDING, JobStatus.NEW],
+)
 ```
 
 ## CLI
@@ -111,6 +128,16 @@ mivia analyze --model MODEL_UUID --list-customizations
 
 # List jobs
 mivia jobs list
+
+# List jobs for specific model (by name or UUID)
+mivia jobs list --model "Grain Size"
+
+# List all jobs (fetch all pages)
+mivia jobs list --model "Grain Size" --all
+
+# Filter by status
+mivia jobs list --model "Grain Size" --status FAILED --all
+mivia jobs list --model "Grain Size" --status PENDING,FAILED --all
 
 # Get job details
 mivia jobs get JOB_UUID
@@ -191,6 +218,7 @@ mivia --proxy http://proxy:8080 config
 | `create_jobs(image_ids, model_id)` | Create computation jobs |
 | `get_job(id)` | Get job details with results |
 | `list_jobs()` | List jobs with pagination |
+| `list_all_jobs(model_id, status)` | List all jobs with auto-pagination and filtering |
 | `wait_for_job(id)` | Poll until job completes |
 | `wait_for_jobs(ids)` | Wait for multiple jobs |
 | `download_pdf(job_ids, path)` | Download PDF report |

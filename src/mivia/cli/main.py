@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.table import Table
 
 from mivia.exceptions import MiviaError
+from mivia.models import JobStatus
 from mivia.sync_client import SyncMiviaClient
 
 app = typer.Typer(
@@ -338,29 +339,79 @@ def analyze(
 # --- Jobs Subcommands ---
 
 
+def parse_status_filter(status_str: str | None) -> list[JobStatus] | None:
+    """Parse comma-separated status filter string."""
+    if not status_str:
+        return None
+    statuses = []
+    for s in status_str.split(","):
+        s = s.strip().upper()
+        try:
+            statuses.append(JobStatus(s))
+        except ValueError:
+            rprint(f"[red]Error:[/red] Invalid status '{s}'")
+            valid = ", ".join(js.value for js in JobStatus)
+            rprint(f"[yellow]Valid statuses:[/yellow] {valid}")
+            raise typer.Exit(1)
+    return statuses
+
+
 @jobs_app.command("list")
 def jobs_list(
     model: Annotated[
-        str | None, typer.Option("--model", "-m", help="Filter by model UUID")
+        str | None, typer.Option("--model", "-m", help="Filter by model UUID or name")
     ] = None,
+    status: Annotated[
+        str | None,
+        typer.Option(
+            "--status",
+            help="Filter by status (comma-separated: CACHED,NEW,FAILED,PENDING)",
+        ),
+    ] = None,
+    all_pages: Annotated[
+        bool, typer.Option("--all", "-a", help="Fetch all pages")
+    ] = False,
     page: Annotated[int, typer.Option("--page", "-p", help="Page number")] = 1,
-    size: Annotated[int, typer.Option("--size", "-s", help="Page size")] = 10,
+    size: Annotated[int, typer.Option("--size", help="Page size")] = 10,
 ) -> None:
     """List jobs."""
     try:
         client = get_client()
-        model_id = UUID(model) if model else None
 
-        result = client.list_jobs(model_id=model_id, page=page, page_size=size)
+        # Resolve model by UUID or name
+        model_id = None
+        if model:
+            model_id = resolve_model(client, model)
 
-        pg = result.pagination
-        table = Table(title=f"Jobs (Page {pg.page}/{pg.total_pages})")
+        # Parse status filter
+        status_filter = parse_status_filter(status)
+
+        if all_pages:
+            # Fetch all jobs with automatic pagination
+            jobs = client.list_all_jobs(
+                model_id=model_id,
+                status=status_filter,
+                page_size=100,
+            )
+            table = Table(title=f"Jobs (Total: {len(jobs)})")
+        else:
+            # Single page
+            result = client.list_jobs(model_id=model_id, page=page, page_size=size)
+            jobs = result.data
+            if status_filter:
+                jobs = [j for j in jobs if j.status in status_filter]
+            pg = result.pagination
+            table = Table(title=f"Jobs (Page {pg.page}/{pg.total_pages})")
+
         table.add_column("ID", style="dim")
         table.add_column("Image")
         table.add_column("Status")
         table.add_column("Created")
+        table.add_column("Started")
+        table.add_column("Finished")
+        table.add_column("Duration")
 
-        for job in result.data:
+        for job in jobs:
             status_color = {
                 "CACHED": "green",
                 "NEW": "green",
@@ -368,15 +419,25 @@ def jobs_list(
                 "FAILED": "red",
             }.get(job.status.value, "white")
 
+            # Calculate duration if both times available
+            duration = "-"
+            if job.started_at and job.finished_at:
+                delta = job.finished_at - job.started_at
+                duration = f"{delta.total_seconds():.1f}s"
+
             table.add_row(
                 str(job.id),
-                job.image,
+                job.image or "-",
                 f"[{status_color}]{job.status.value}[/{status_color}]",
-                job.created_at.strftime("%Y-%m-%d %H:%M"),
+                job.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                job.started_at.strftime("%H:%M:%S") if job.started_at else "-",
+                job.finished_at.strftime("%H:%M:%S") if job.finished_at else "-",
+                duration,
             )
 
         console.print(table)
-        rprint(f"Total: {result.pagination.total} jobs")
+        if not all_pages:
+            rprint(f"Total: {result.pagination.total} jobs")
     except MiviaError as e:
         handle_error(e)
 

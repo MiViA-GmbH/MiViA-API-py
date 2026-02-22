@@ -10,6 +10,7 @@ from mivia.models import (
     ImageDto,
     JobDto,
     JobListResponse,
+    JobStatus,
     ModelDto,
 )
 
@@ -192,6 +193,33 @@ class SyncMiviaClient:
         """
         return self._run(
             self._execute("list_jobs", model_id, page, page_size, sort_by, sort_order)
+        )
+
+    def list_all_jobs(
+        self,
+        model_id: UUID | None = None,
+        status: JobStatus | list[JobStatus] | None = None,
+        sort_by: str = "createdAt",
+        sort_order: str = "desc",
+        page_size: int = 100,
+    ) -> list[JobDto]:
+        """
+        List all jobs with automatic pagination.
+
+        Args:
+            model_id: Optional filter by model.
+            status: Optional filter by status (single or list).
+            sort_by: Sort field.
+            sort_order: Sort order (asc/desc).
+            page_size: Items per page for pagination.
+
+        Returns:
+            List of all job DTOs matching criteria.
+        """
+        return self._run(
+            self._execute(
+                "list_all_jobs", model_id, status, sort_by, sort_order, page_size
+            )
         )
 
     def wait_for_job(
