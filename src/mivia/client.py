@@ -3,7 +3,7 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 from uuid import UUID
 
 import httpx
@@ -212,6 +212,29 @@ class MiviaClient:
         self._handle_response(response)
         return [CustomizationDto.model_validate(c) for c in response.json()]
 
+    async def get_resolved_customization_config(
+        self, customization_id: UUID
+    ) -> dict[str, Any]:
+        """
+        Get the fully resolved customization config (after parent merge).
+
+        Admin-only on the server. The returned dict is the same JSON the
+        server would use if you simply created jobs with this customization
+        and no override.
+
+        Args:
+            customization_id: Customization group UUID.
+
+        Returns:
+            Resolved config JSON.
+        """
+        client = self._ensure_client()
+        response = await client.get(
+            f"/admin/customizations/groups/{customization_id}/resolved-settings"
+        )
+        self._handle_response(response)
+        return response.json()
+
     # --- Job Operations ---
 
     async def create_jobs(
@@ -219,6 +242,7 @@ class MiviaClient:
         image_ids: list[UUID],
         model_id: UUID,
         customization_id: UUID | None = None,
+        customization_config_override: dict[str, Any] | None = None,
     ) -> list[JobDto]:
         """
         Create computation jobs.
@@ -226,7 +250,14 @@ class MiviaClient:
         Args:
             image_ids: List of image UUIDs.
             model_id: Model UUID.
-            customization_id: Optional customization UUID.
+            customization_id: Optional customization UUID. Used as the baseline
+                template (preserved on the resulting JobCustomization rows even
+                when an override is supplied).
+            customization_config_override: Admin-only. Full inline customization
+                config that replaces the resolved template config for these jobs
+                only. The stored customization group is not modified. Non-admin
+                callers receive 403 if this is set. For partial overrides use
+                ``create_jobs_with_patch``.
 
         Returns:
             List of created job DTOs.
@@ -237,6 +268,7 @@ class MiviaClient:
             image_ids=image_ids,
             model_id=model_id,
             customization_id=customization_id,
+            customization_config_override=customization_config_override,
         )
 
         response = await client.post(

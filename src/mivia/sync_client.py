@@ -2,6 +2,7 @@
 
 import asyncio
 from pathlib import Path
+from typing import Any
 from uuid import UUID
 
 from mivia.client import MiviaClient
@@ -135,6 +136,22 @@ class SyncMiviaClient:
         """
         return self._run(self._execute("get_model_customizations", model_id))
 
+    def get_resolved_customization_config(
+        self, customization_id: UUID
+    ) -> dict[str, Any]:
+        """
+        Get the fully resolved customization config. Admin-only on the server.
+
+        Args:
+            customization_id: Customization group UUID.
+
+        Returns:
+            Resolved config JSON.
+        """
+        return self._run(
+            self._execute("get_resolved_customization_config", customization_id)
+        )
+
     # --- Job Operations ---
 
     def create_jobs(
@@ -142,6 +159,7 @@ class SyncMiviaClient:
         image_ids: list[UUID],
         model_id: UUID,
         customization_id: UUID | None = None,
+        customization_config_override: dict[str, Any] | None = None,
     ) -> list[JobDto]:
         """
         Create computation jobs.
@@ -149,13 +167,21 @@ class SyncMiviaClient:
         Args:
             image_ids: List of image UUIDs.
             model_id: Model UUID.
-            customization_id: Optional customization UUID.
+            customization_id: Optional customization UUID (baseline template).
+            customization_config_override: Admin-only full inline config that
+                replaces the resolved template config for these jobs only.
 
         Returns:
             List of created job DTOs.
         """
         return self._run(
-            self._execute("create_jobs", image_ids, model_id, customization_id)
+            self._execute(
+                "create_jobs",
+                image_ids,
+                model_id,
+                customization_id,
+                customization_config_override,
+            )
         )
 
     def get_job(self, job_id: UUID) -> JobDto:

@@ -178,6 +178,9 @@ class CreateJobsRequest(BaseModel):
     model_id: UUID = Field(serialization_alias="modelId")
     customization_id: UUID | None = Field(None, serialization_alias="customizationId")
     source: JobSource = JobSource.API
+    customization_config_override: dict[str, Any] | None = Field(
+        None, serialization_alias="customizationConfigOverride"
+    )
 
 
 class CreateReportRequest(BaseModel):

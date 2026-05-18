@@ -1,5 +1,6 @@
 """MiViA Python API client."""
 
+from mivia._merge import deep_merge
 from mivia.client import MiviaClient
 from mivia.exceptions import (
     AuthenticationError,
@@ -41,6 +42,8 @@ __all__ = [
     "JobListResponse",
     "CreateJobsRequest",
     "CreateReportRequest",
+    # Helpers
+    "deep_merge",
 ]
 
 from importlib.metadata import PackageNotFoundError, version
