@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.4](https://github.com/MiViA-GmbH/MiViA-API-py/compare/mivia-v0.1.3...mivia-v0.1.4) (2026-05-18)
+
+
+### Features
+
+* add get_recent_job_ids method and recent-ids CLI command ([1abff4d](https://github.com/MiViA-GmbH/MiViA-API-py/commit/1abff4d7a0c5b90bd3a067a50a1273a6fcb06773))
+* add list_all_jobs, enhance jobs list CLI with status filter and pagination ([bdeefc9](https://github.com/MiViA-GmbH/MiViA-API-py/commit/bdeefc9c0ea90216225ddbe8ac3634ac62dbfbb0))
+* admin-only inline customization override on create_jobs ([3386abf](https://github.com/MiViA-GmbH/MiViA-API-py/commit/3386abfe0eb8002d3376b5276e9b07af6c0feffa))
+
+
+### Bug Fixes
+
+* add startedAt/finishedAt to JobDto, handle empty customization ([3e60dae](https://github.com/MiViA-GmbH/MiViA-API-py/commit/3e60dae4cbb14f1bbf96c404d8695b0035dac461))
+
 ## [0.1.3](https://github.com/MiViA-GmbH/MiViA-API-py/compare/mivia-v0.1.2...mivia-v0.1.3) (2026-01-29)
 
 
