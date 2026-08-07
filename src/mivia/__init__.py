@@ -18,6 +18,7 @@ from mivia.models import (
     JobDto,
     JobListResponse,
     JobStatus,
+    JobStatusDto,
     ModelDto,
 )
 from mivia.sync_client import SyncMiviaClient
@@ -38,6 +39,7 @@ __all__ = [
     "ModelDto",
     "CustomizationDto",
     "JobDto",
+    "JobStatusDto",
     "JobStatus",
     "JobListResponse",
     "CreateJobsRequest",

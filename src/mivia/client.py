@@ -24,6 +24,7 @@ from mivia.models import (
     JobDto,
     JobListResponse,
     JobStatus,
+    JobStatusDto,
     ModelDto,
 )
 
@@ -355,6 +356,31 @@ class MiviaClient:
         response = await client.get("/v2/jobs", params=params)
         self._handle_response(response)
         return JobListResponse.model_validate(response.json())
+
+    async def get_jobs_status(self, job_ids: list[UUID]) -> list[JobStatusDto]:
+        """
+        Get the current state of specific jobs.
+
+        Returns only the fields that change while a job runs, so a client
+        tracking in-flight work does not have to refetch the whole list.
+        Unknown or foreign job IDs are omitted from the response.
+
+        Args:
+            job_ids: Job UUIDs to poll, at most 100.
+
+        Returns:
+            Current state of each known job.
+        """
+        if not job_ids:
+            return []
+
+        client = self._ensure_client()
+        response = await client.get(
+            "/v2/jobs/status",
+            params={"ids": ",".join(str(job_id) for job_id in job_ids)},
+        )
+        self._handle_response(response)
+        return [JobStatusDto.model_validate(j) for j in response.json()]
 
     async def list_all_jobs(
         self,

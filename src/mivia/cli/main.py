@@ -326,7 +326,7 @@ def analyze(
 
             table.add_row(
                 str(job.id),
-                job.image,
+                job.image_filename or "-",
                 f"[{status_color}]{job.status.value}[/{status_color}]",
                 "Yes" if job.has_results else "No",
             )
@@ -427,7 +427,7 @@ def jobs_list(
 
             table.add_row(
                 str(job.id),
-                job.image or "-",
+                job.image_filename or "-",
                 f"[{status_color}]{job.status.value}[/{status_color}]",
                 job.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 job.started_at.strftime("%H:%M:%S") if job.started_at else "-",
@@ -476,7 +476,7 @@ def jobs_get(
         job = client.get_job(UUID(job_id))
 
         rprint(f"[bold]Job ID:[/bold] {job.id}")
-        rprint(f"[bold]Image:[/bold] {job.image}")
+        rprint(f"[bold]Image:[/bold] {job.image_filename or '-'}")
         rprint(f"[bold]Model ID:[/bold] {job.model_id}")
         rprint(f"[bold]Status:[/bold] {job.status.value}")
         rprint(f"[bold]Has Results:[/bold] {job.has_results}")

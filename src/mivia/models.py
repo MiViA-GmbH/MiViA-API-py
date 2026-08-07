@@ -103,15 +103,60 @@ class JobMaskDto(BaseModel):
 
 
 class JobFeedbackDto(BaseModel):
-    """Job feedback data transfer object."""
+    """User rating attached to a job."""
 
-    id: int
     rating: int
-    comment: str
+    comment: str | None = None
 
 
-class JobCustomizationDto(BaseModel):
-    """Job customization embedded object."""
+class JobModelFeedbackDto(BaseModel):
+    """Single model-emitted quality flag."""
+
+    name: str
+    value: bool
+    score: float
+
+
+class JobImageDto(BaseModel):
+    """Source image summary embedded in a job."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    orginal_filename: str = Field(alias="orginalFilename")  # Note: server typo
+    created_at: datetime = Field(alias="createdAt")
+    id: UUID | None = None  # Only in GET /v2/jobs/{id}
+
+
+class JobImageUrlsDto(BaseModel):
+    """Short-lived presigned URLs for the source image."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    display_url: str = Field(alias="displayUrl")
+    original_url: str = Field(alias="originalUrl")
+    view_url: str | None = Field(None, alias="viewUrl")
+
+
+class JobResultDto(BaseModel):
+    """Computed result attached to a job."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: UUID | None = None  # Only in GET /v2/jobs/{id}
+    feedback: list[JobModelFeedbackDto] | None = None
+    results: list[Any] | None = None  # Only in GET /v2/jobs/{id}
+
+
+class JobModelDto(BaseModel):
+    """Model summary embedded in a job."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    display_name: str = Field(alias="displayName")
+
+
+class JobCustomizationTemplateDto(BaseModel):
+    """Customization template embedded in a job."""
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -120,13 +165,22 @@ class JobCustomizationDto(BaseModel):
     config: dict[str, Any] | None = None
 
 
+class JobCustomizationDto(BaseModel):
+    """Job customization embedded object."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    config: dict[str, Any] | None = None
+    template: JobCustomizationTemplateDto | None = None
+
+
 class JobDto(BaseModel):
     """Job data transfer object (V2 and POST /jobs response)."""
 
     model_config = ConfigDict(populate_by_name=True)
 
     id: UUID
-    image_id: UUID = Field(alias="imageId")
+    image_id: UUID | None = Field(None, alias="imageId")
     model_id: UUID = Field(alias="modelId")
     result_id: UUID | None = Field(None, alias="resultId")
     status: JobStatus
@@ -135,12 +189,31 @@ class JobDto(BaseModel):
     created_at: datetime = Field(alias="createdAt")
     started_at: datetime | None = Field(None, alias="startedAt")
     finished_at: datetime | None = Field(None, alias="finishedAt")
-    image: str | None = None  # Only in GET /v2/jobs
-    results: list[Any] | None = None
+    model_version: str | None = Field(None, alias="modelVersion")
+    image: JobImageDto | None = None  # Only in GET /v2/jobs
+    result: JobResultDto | None = None  # Only in GET /v2/jobs
+    customization_id: UUID | None = Field(None, alias="customizationId")
+    masks_pending: int | None = Field(None, alias="masksPending")
+    masks_submitted: int | None = Field(None, alias="masksSubmitted")
     user_feedback: JobFeedbackDto | None = Field(None, alias="userFeedback")
+    with_masks: bool = Field(alias="withMasks")
+
+    # Only in GET /v2/jobs/{id}
+    source: JobSource | None = None
+    model: JobModelDto | None = None
+    image_urls: JobImageUrlsDto | None = Field(None, alias="imageUrls")
     masks: list[JobMaskDto] | None = None
     customization: JobCustomizationDto | None = None
-    with_masks: bool = Field(alias="withMasks")
+
+    @property
+    def results(self) -> list[Any] | None:
+        """Computed results, present once the job is fetched with get_job()."""
+        return self.result.results if self.result else None
+
+    @property
+    def image_filename(self) -> str | None:
+        """Original filename of the source image."""
+        return self.image.orginal_filename if self.image else None
 
     @field_validator("customization", mode="before")
     @classmethod
@@ -149,6 +222,17 @@ class JobDto(BaseModel):
         if isinstance(v, dict) and not v:
             return None
         return v
+
+
+class JobStatusDto(BaseModel):
+    """Fields that change while a job runs, from GET /v2/jobs/status."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: UUID
+    status: JobStatus
+    result_id: UUID | None = Field(None, alias="resultId")
+    finished_at: datetime | None = Field(None, alias="finishedAt")
 
 
 class PaginationDto(BaseModel):

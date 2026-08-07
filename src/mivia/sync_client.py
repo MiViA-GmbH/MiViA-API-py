@@ -12,6 +12,7 @@ from mivia.models import (
     JobDto,
     JobListResponse,
     JobStatus,
+    JobStatusDto,
     ModelDto,
 )
 
@@ -237,6 +238,22 @@ class SyncMiviaClient:
         return self._run(
             self._execute("list_jobs", model_id, page, page_size, sort_by, sort_order)
         )
+
+    def get_jobs_status(self, job_ids: list[UUID]) -> list[JobStatusDto]:
+        """
+        Get the current state of specific jobs.
+
+        Returns only the fields that change while a job runs, so a client
+        tracking in-flight work does not have to refetch the whole list.
+        Unknown or foreign job IDs are omitted from the response.
+
+        Args:
+            job_ids: Job UUIDs to poll, at most 100.
+
+        Returns:
+            Current state of each known job.
+        """
+        return self._run(self._execute("get_jobs_status", job_ids))
 
     def list_all_jobs(
         self,

@@ -1,6 +1,6 @@
 [project]
 name = "mivia"
-version = "0.3.1"
+version = "0.4.0"
 description = "Python API client for MiViA (Microstructure Analysis)"
 readme = "README.md"
 license = {text = "MIT"}
