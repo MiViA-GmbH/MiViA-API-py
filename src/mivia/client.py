@@ -487,7 +487,7 @@ class MiviaClient:
         tz_offset: int | None = None,
     ) -> Path:
         """
-        Download PDF report.
+        Queue a PDF report and wait for the worker to render it.
 
         Args:
             job_ids: List of job UUIDs.
@@ -497,22 +497,11 @@ class MiviaClient:
         Returns:
             Path to saved file.
         """
-        client = self._ensure_client()
-
         request = CreateReportRequest(
             jobs_ids=job_ids,
             tz_offset=tz_offset,
         )
-
-        response = await client.post(
-            "/reports/pdf",
-            json=request.model_dump(mode="json", by_alias=True, exclude_none=True),
-        )
-        self._handle_response(response)
-
-        out = Path(output_path)
-        out.write_bytes(response.content)
-        return out
+        return await self._download_report("pdf", request, output_path)
 
     async def download_csv(
         self,
@@ -521,7 +510,7 @@ class MiviaClient:
         include_images: bool = True,
     ) -> Path:
         """
-        Download CSV report (as zip).
+        Queue a CSV report and wait for the worker to build the archive.
 
         Args:
             job_ids: List of job UUIDs.
@@ -531,21 +520,60 @@ class MiviaClient:
         Returns:
             Path to saved file.
         """
-        client = self._ensure_client()
-
         request = CreateReportRequest(
             jobs_ids=job_ids,
             include_images=include_images,
         )
+        return await self._download_report("csv", request, output_path)
+
+    async def _download_report(
+        self,
+        format: str,
+        request: CreateReportRequest,
+        output_path: Path | str,
+        timeout: float = 900.0,
+        poll_interval: float = 2.0,
+    ) -> Path:
+        """Queue the report, poll until the worker finishes, then fetch the file."""
+        client = self._ensure_client()
 
         response = await client.post(
-            "/reports/csv",
+            f"/reports/{format}",
             json=request.model_dump(mode="json", by_alias=True, exclude_none=True),
         )
         self._handle_response(response)
+        report_id = response.json()["reportId"]
+
+        elapsed = 0.0
+        while True:
+            response = await client.get(f"/reports/{report_id}")
+            self._handle_response(response)
+            report = response.json()
+            status = report["status"]
+            if status != "PENDING" or elapsed >= timeout:
+                break
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
+
+        if status == "FAILED":
+            raise MiviaError(f"Report {report_id} failed: {report.get('error')}")
+        if status != "DONE":
+            raise JobTimeoutError(f"Report {report_id} not ready within {timeout}s")
+
+        response = await client.get(f"/reports/{report_id}/download")
+        self._handle_response(response)
+        url = response.json().get("url")
+        if not url:
+            raise MiviaError(f"Report {report_id} is no longer available")
 
         out = Path(output_path)
-        out.write_bytes(response.content)
+        # a plain client: the presigned URL must not carry the API auth header
+        async with httpx.AsyncClient(timeout=self._timeout, proxy=self._proxy) as raw:
+            async with raw.stream("GET", url) as file:
+                file.raise_for_status()
+                with out.open("wb") as sink:
+                    async for chunk in file.aiter_bytes():
+                        sink.write(chunk)
         return out
 
     # --- High-Level Convenience ---
