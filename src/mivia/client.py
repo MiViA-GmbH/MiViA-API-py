@@ -557,6 +557,11 @@ class MiviaClient:
 
         if status == "FAILED":
             raise MiviaError(f"Report {report_id} failed: {report.get('error')}")
+        if status == "CANCELLED":
+            # the server keeps one report per user; a newer request replaced this one
+            raise MiviaError(
+                f"Report {report_id} was cancelled by a newer report request"
+            )
         if status != "DONE":
             raise JobTimeoutError(f"Report {report_id} not ready within {timeout}s")
 
