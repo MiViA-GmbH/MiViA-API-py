@@ -93,6 +93,8 @@ class MiviaClient:
             except Exception:
                 detail = response.text
             raise ValidationError(str(detail))
+        if response.status_code == 429:
+            raise MiviaError("Too many reports in flight, retry once one finishes")
         if response.status_code >= 500:
             raise ServerError(f"Server error: {response.status_code}")
         response.raise_for_status()
@@ -542,18 +544,20 @@ class MiviaClient:
             json=request.model_dump(mode="json", by_alias=True, exclude_none=True),
         )
         self._handle_response(response)
-        report_id = response.json()["reportId"]
+        queued = response.json()
+        report_id = queued["reportId"]
 
+        # an identical report still in storage comes back DONE, with nothing to wait for
+        report = queued
+        status = queued.get("status", "PENDING")
         elapsed = 0.0
-        while True:
+        while status == "PENDING" and elapsed < timeout:
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
             response = await client.get(f"/reports/{report_id}")
             self._handle_response(response)
             report = response.json()
             status = report["status"]
-            if status != "PENDING" or elapsed >= timeout:
-                break
-            await asyncio.sleep(poll_interval)
-            elapsed += poll_interval
 
         if status == "FAILED":
             raise MiviaError(f"Report {report_id} failed: {report.get('error')}")
