@@ -13,6 +13,8 @@ from mivia.exceptions import (
     JobTimeoutError,
     MiviaError,
     NotFoundError,
+    PermissionError,
+    RateLimitError,
     ServerError,
     ValidationError,
 )
@@ -81,20 +83,27 @@ class MiviaClient:
             raise MiviaError("Client not initialized. Use 'async with' context.")
         return self._client
 
+    @staticmethod
+    def _detail(response: httpx.Response, fallback: str) -> str:
+        try:
+            return str(response.json().get("message", fallback))
+        except Exception:
+            return response.text or fallback
+
     def _handle_response(self, response: httpx.Response) -> None:
         """Handle HTTP response errors."""
         if response.status_code == 401:
             raise AuthenticationError()
+        if response.status_code == 403:
+            raise PermissionError(self._detail(response, "Not allowed"))
         if response.status_code == 404:
             raise NotFoundError()
         if response.status_code == 400:
-            try:
-                detail = response.json().get("message", "Validation error")
-            except Exception:
-                detail = response.text
-            raise ValidationError(str(detail))
+            raise ValidationError(self._detail(response, "Validation error"))
         if response.status_code == 429:
-            raise MiviaError("Too many reports in flight, retry once one finishes")
+            raise RateLimitError(
+                self._detail(response, "Too many requests, retry once one finishes")
+            )
         if response.status_code >= 500:
             raise ServerError(f"Server error: {response.status_code}")
         response.raise_for_status()

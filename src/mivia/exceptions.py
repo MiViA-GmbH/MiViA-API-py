@@ -24,6 +24,20 @@ class NotFoundError(MiviaError):
         super().__init__(message, status_code=404)
 
 
+class PermissionError(MiviaError):
+    """Authenticated, but not allowed to touch this resource (403)."""
+
+    def __init__(self, message: str = "Not allowed"):
+        super().__init__(message, status_code=403)
+
+
+class RateLimitError(MiviaError):
+    """Too many requests in flight (429)."""
+
+    def __init__(self, message: str = "Too many requests"):
+        super().__init__(message, status_code=429)
+
+
 class ValidationError(MiviaError):
     """Request validation failed (400)."""
 

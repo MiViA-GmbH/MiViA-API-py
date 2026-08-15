@@ -7,6 +7,8 @@ from mivia.exceptions import (
     JobTimeoutError,
     MiviaError,
     NotFoundError,
+    PermissionError,
+    RateLimitError,
     ServerError,
     ValidationError,
 )
@@ -31,6 +33,8 @@ __all__ = [
     "MiviaError",
     "AuthenticationError",
     "NotFoundError",
+    "PermissionError",
+    "RateLimitError",
     "ValidationError",
     "ServerError",
     "JobTimeoutError",
