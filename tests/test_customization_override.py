@@ -87,6 +87,23 @@ async def test_get_resolved_customization_config(
 
 
 @pytest.mark.asyncio
+async def test_get_recent_job_ids_parses_plain_array(
+    httpx_mock: HTTPXMock, api_key: str, base_url: str
+) -> None:
+    job_id = uuid4()
+    httpx_mock.add_response(
+        method="GET",
+        url=f"{base_url}/jobs?idOnly=true&source=API&since=1h",
+        json=[{"id": str(job_id)}],
+    )
+
+    async with MiviaClient(api_key=api_key, base_url=base_url) as client:
+        result = await client.get_recent_job_ids()
+
+    assert result == [job_id]
+
+
+@pytest.mark.asyncio
 async def test_create_jobs_without_override_omits_field(
     httpx_mock: HTTPXMock, api_key: str, base_url: str
 ) -> None:

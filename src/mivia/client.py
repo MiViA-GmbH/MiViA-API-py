@@ -329,8 +329,7 @@ class MiviaClient:
         response = await client.get("/jobs", params=params)
         self._handle_response(response)
 
-        data = response.json()
-        return [UUID(item["id"]) for item in data["jobs"]]
+        return [UUID(item["id"]) for item in response.json()]
 
     async def list_jobs(
         self,
