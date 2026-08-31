@@ -1,5 +1,3 @@
-"""Pydantic models for MiViA API."""
-
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -9,8 +7,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class JobStatus(str, Enum):
-    """Job status enum."""
-
     CACHED = "CACHED"
     NEW = "NEW"
     FAILED = "FAILED"
@@ -18,8 +14,6 @@ class JobStatus(str, Enum):
 
 
 class JobSource(str, Enum):
-    """Job source enum."""
-
     WEB = "WEB"
     API = "API"
     SANDBOX = "SANDBOX"
@@ -28,8 +22,6 @@ class JobSource(str, Enum):
 
 
 class ModelAccessType(str, Enum):
-    """Model access type enum."""
-
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
 
@@ -81,12 +73,10 @@ class CustomizationDto(BaseModel):
 
     @property
     def name_en(self) -> str:
-        """Get English name."""
         return self.name.en
 
     @property
     def name_de(self) -> str:
-        """Get German name."""
         return self.name.de
 
 
@@ -212,13 +202,11 @@ class JobDto(BaseModel):
 
     @property
     def image_filename(self) -> str | None:
-        """Original filename of the source image."""
         return self.image.orginal_filename if self.image else None
 
     @field_validator("customization", mode="before")
     @classmethod
     def empty_dict_to_none(cls, v: Any) -> Any:
-        """Convert empty dict to None for customization field."""
         if isinstance(v, dict) and not v:
             return None
         return v

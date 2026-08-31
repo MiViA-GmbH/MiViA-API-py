@@ -1,5 +1,3 @@
-"""Tests for ephemeral per-job customization override."""
-
 from uuid import uuid4
 
 import pytest

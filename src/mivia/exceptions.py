@@ -1,6 +1,3 @@
-"""MiViA API client exceptions."""
-
-
 class MiviaError(Exception):
     """Base exception for MiViA API errors."""
 

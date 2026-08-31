@@ -1,5 +1,3 @@
-"""MiViA Python API client."""
-
 from mivia._merge import deep_merge
 from mivia.client import MiviaClient
 from mivia.exceptions import (

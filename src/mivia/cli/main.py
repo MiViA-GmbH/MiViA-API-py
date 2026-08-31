@@ -1,5 +1,3 @@
-"""MiViA CLI application."""
-
 import os
 from pathlib import Path
 from typing import Annotated
@@ -29,8 +27,6 @@ console = Console()
 
 
 class CLIState:
-    """Global CLI state."""
-
     proxy: str | None = None
 
 
@@ -53,17 +49,12 @@ def main_callback(
 
 
 def get_client() -> SyncMiviaClient:
-    """Get configured client."""
     return SyncMiviaClient(proxy=cli_state.proxy)
 
 
 def handle_error(e: MiviaError) -> None:
-    """Handle and display error."""
     rprint(f"[red]Error:[/red] {e.message}")
     raise typer.Exit(1)
-
-
-# --- Models ---
 
 
 @app.command()
@@ -90,9 +81,6 @@ def models() -> None:
         console.print(table)
     except MiviaError as e:
         handle_error(e)
-
-
-# --- Customizations ---
 
 
 @app.command()
@@ -123,9 +111,6 @@ def customizations(
         console.print(table)
     except MiviaError as e:
         handle_error(e)
-
-
-# --- Upload ---
 
 
 @app.command()
@@ -161,9 +146,6 @@ def upload(
         handle_error(e)
 
 
-# --- Images ---
-
-
 @app.command()
 def images() -> None:
     """List uploaded images."""
@@ -190,28 +172,21 @@ def images() -> None:
         handle_error(e)
 
 
-# --- Analyze ---
-
-
 def resolve_model(
     client: SyncMiviaClient,
     model: str,
 ) -> UUID:
-    """Resolve model by UUID or name."""
-    # Try UUID first
     try:
         return UUID(model)
     except ValueError:
         pass
 
-    # Search by name
     models = client.list_models()
     model_lower = model.lower()
     for m in models:
         if model_lower in (m.name.lower(), m.display_name.lower()):
             return m.id
 
-    # Partial match
     for m in models:
         if model_lower in m.name.lower() or model_lower in m.display_name.lower():
             return m.id
@@ -229,23 +204,19 @@ def resolve_customization(
     model_id: UUID,
     customization: str | None,
 ) -> UUID | None:
-    """Resolve customization by UUID or name."""
     if not customization:
         return None
 
-    # Try UUID first
     try:
         return UUID(customization)
     except ValueError:
         pass
 
-    # Search by name
     customs = client.get_model_customizations(model_id)
     for c in customs:
         if customization.lower() in (c.name.en.lower(), c.name.de.lower()):
             return c.id
 
-    # Partial match
     cust_lower = customization.lower()
     for c in customs:
         if cust_lower in c.name.en.lower() or cust_lower in c.name.de.lower():
@@ -287,7 +258,6 @@ def analyze(
         client = get_client()
         model_id = resolve_model(client, model)
 
-        # List customizations if requested
         if list_customizations:
             customs = client.get_model_customizations(model_id)
             if not customs:
@@ -336,11 +306,7 @@ def analyze(
         handle_error(e)
 
 
-# --- Jobs Subcommands ---
-
-
 def parse_status_filter(status_str: str | None) -> list[JobStatus] | None:
-    """Parse comma-separated status filter string."""
     if not status_str:
         return None
     statuses = []
@@ -378,16 +344,13 @@ def jobs_list(
     try:
         client = get_client()
 
-        # Resolve model by UUID or name
         model_id = None
         if model:
             model_id = resolve_model(client, model)
 
-        # Parse status filter
         status_filter = parse_status_filter(status)
 
         if all_pages:
-            # Fetch all jobs with automatic pagination
             jobs = client.list_all_jobs(
                 model_id=model_id,
                 status=status_filter,
@@ -395,7 +358,6 @@ def jobs_list(
             )
             table = Table(title=f"Jobs (Total: {len(jobs)})")
         else:
-            # Single page
             result = client.list_jobs(model_id=model_id, page=page, page_size=size)
             jobs = result.data
             if status_filter:
@@ -419,7 +381,6 @@ def jobs_list(
                 "FAILED": "red",
             }.get(job.status.value, "white")
 
-            # Calculate duration if both times available
             duration = "-"
             if job.started_at and job.finished_at:
                 delta = job.finished_at - job.started_at
@@ -516,9 +477,6 @@ def jobs_wait(
         handle_error(e)
 
 
-# --- Report Subcommands ---
-
-
 @report_app.command("pdf")
 def report_pdf(
     job_ids: Annotated[list[str], typer.Argument(help="Job UUIDs")],
@@ -558,9 +516,6 @@ def report_csv(
         rprint(f"[green]Saved to:[/green] {path}")
     except MiviaError as e:
         handle_error(e)
-
-
-# --- Config ---
 
 
 @app.command()

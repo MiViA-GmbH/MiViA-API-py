@@ -1,5 +1,3 @@
-"""Async MiViA API client."""
-
 import asyncio
 import os
 from pathlib import Path
@@ -62,7 +60,6 @@ class MiviaClient:
         self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> Self:
-        """Enter async context."""
         self._client = httpx.AsyncClient(
             base_url=self._base_url,
             headers={"Authorization": self._api_key},
@@ -72,13 +69,11 @@ class MiviaClient:
         return self
 
     async def __aexit__(self, *args) -> None:
-        """Exit async context."""
         if self._client:
             await self._client.aclose()
             self._client = None
 
     def _ensure_client(self) -> httpx.AsyncClient:
-        """Ensure client is initialized."""
         if self._client is None:
             raise MiviaError("Client not initialized. Use 'async with' context.")
         return self._client
@@ -91,7 +86,6 @@ class MiviaClient:
             return response.text or fallback
 
     def _handle_response(self, response: httpx.Response) -> None:
-        """Handle HTTP response errors."""
         if response.status_code == 401:
             raise AuthenticationError()
         if response.status_code == 403:
@@ -107,8 +101,6 @@ class MiviaClient:
         if response.status_code >= 500:
             raise ServerError(f"Server error: {response.status_code}")
         response.raise_for_status()
-
-    # --- Image Operations ---
 
     async def upload_image(
         self,
@@ -158,7 +150,6 @@ class MiviaClient:
         self._handle_response(response)
         uploaded = [ImageDto.model_validate(img) for img in response.json()]
 
-        # If some images weren't uploaded (duplicates), find existing by filename
         if reuse_existing and len(uploaded) < len(paths):
             uploaded_names = {img.original_filename for img in uploaded}
             missing_names = {p.name for p in paths} - uploaded_names
@@ -194,8 +185,6 @@ class MiviaClient:
         client = self._ensure_client()
         response = await client.delete(f"/image/{image_id}")
         self._handle_response(response)
-
-    # --- Model Operations ---
 
     async def list_models(self) -> list[ModelDto]:
         """
@@ -246,8 +235,6 @@ class MiviaClient:
         )
         self._handle_response(response)
         return response.json()
-
-    # --- Job Operations ---
 
     async def create_jobs(
         self,
@@ -488,8 +475,6 @@ class MiviaClient:
         tasks = [self.wait_for_job(jid, timeout, poll_interval) for jid in job_ids]
         return await asyncio.gather(*tasks)
 
-    # --- Report Operations ---
-
     async def download_pdf(
         self,
         job_ids: list[UUID],
@@ -544,7 +529,6 @@ class MiviaClient:
         timeout: float = 900.0,
         poll_interval: float = 2.0,
     ) -> Path:
-        """Queue the report, poll until the worker finishes, then fetch the file."""
         client = self._ensure_client()
 
         response = await client.post(
@@ -592,8 +576,6 @@ class MiviaClient:
                     async for chunk in file.aiter_bytes():
                         sink.write(chunk)
         return out
-
-    # --- High-Level Convenience ---
 
     async def analyze(
         self,

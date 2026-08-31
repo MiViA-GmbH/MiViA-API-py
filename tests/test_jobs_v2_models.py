@@ -1,5 +1,3 @@
-"""Tests for the GET /v2/jobs response models."""
-
 from uuid import uuid4
 
 from mivia import JobDto, JobStatusDto
@@ -72,7 +70,6 @@ def test_list_response_parses() -> None:
     assert job.masks_pending == 2
     assert job.user_feedback is not None
     assert job.user_feedback.comment is None
-    # The list carries no computed results.
     assert job.results is None
 
 

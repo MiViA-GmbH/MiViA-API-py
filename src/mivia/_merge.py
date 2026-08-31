@@ -1,5 +1,3 @@
-"""Deep-merge helper for customization config patching."""
-
 from copy import deepcopy
 from typing import Any
 

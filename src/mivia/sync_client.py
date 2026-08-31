@@ -1,11 +1,11 @@
-"""Synchronous wrapper for MiViA API client."""
-
 import asyncio
+import os
 from pathlib import Path
 from typing import Any
 from uuid import UUID
 
 from mivia.client import MiviaClient
+from mivia.exceptions import AuthenticationError
 from mivia.models import (
     CustomizationDto,
     ImageDto,
@@ -36,17 +36,18 @@ class SyncMiviaClient:
             timeout: Request timeout in seconds.
             proxy: Proxy URL. If None, reads from MIVIA_PROXY env var.
         """
-        self._api_key = api_key
+        self._api_key = api_key or os.environ.get("MIVIA_API_KEY")
+        if not self._api_key:
+            raise AuthenticationError("API key required. Set MIVIA_API_KEY env var.")
+
         self._base_url = base_url
         self._timeout = timeout
         self._proxy = proxy
 
     def _run(self, coro):
-        """Run coroutine in event loop."""
         return asyncio.run(coro)
 
     async def _execute(self, method_name: str, *args, **kwargs):
-        """Execute async method within context."""
         async with MiviaClient(
             api_key=self._api_key,
             base_url=self._base_url,
@@ -55,8 +56,6 @@ class SyncMiviaClient:
         ) as client:
             method = getattr(client, method_name)
             return await method(*args, **kwargs)
-
-    # --- Image Operations ---
 
     def upload_image(
         self,
@@ -114,8 +113,6 @@ class SyncMiviaClient:
         """
         return self._run(self._execute("delete_image", image_id))
 
-    # --- Model Operations ---
-
     def list_models(self) -> list[ModelDto]:
         """
         List available models.
@@ -152,8 +149,6 @@ class SyncMiviaClient:
         return self._run(
             self._execute("get_resolved_customization_config", customization_id)
         )
-
-    # --- Job Operations ---
 
     def create_jobs(
         self,
@@ -325,8 +320,6 @@ class SyncMiviaClient:
             self._execute("wait_for_jobs", job_ids, timeout, poll_interval)
         )
 
-    # --- Report Operations ---
-
     def download_pdf(
         self,
         job_ids: list[UUID],
@@ -366,8 +359,6 @@ class SyncMiviaClient:
         return self._run(
             self._execute("download_csv", job_ids, output_path, include_images)
         )
-
-    # --- High-Level Convenience ---
 
     def analyze(
         self,
