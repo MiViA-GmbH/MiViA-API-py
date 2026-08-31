@@ -15,7 +15,6 @@ concurrency:
 jobs:
   publish:
     name: Publish to PyPI
-    if: startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -33,7 +32,8 @@ jobs:
       - name: Verify pyproject.toml version matches tag
         run: |
           tag="${{ github.event.release.tag_name }}"
-          tag_version="${tag#v}"
+          tag_version="${tag#mivia-}"
+          tag_version="${tag_version#v}"
           pkg_version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           echo "tag=$tag_version pyproject=$pkg_version"
           if [ "$tag_version" != "$pkg_version" ]; then
