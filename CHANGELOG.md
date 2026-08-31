@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/MiViA-GmbH/MiViA-API-py/compare/mivia-v0.4.0...mivia-v0.4.1) (2026-08-31)
+
+
+### Bug Fixes
+
+* **client:** validate API key eagerly in SyncMiviaClient, matching MiviaClient ([700d566](https://github.com/MiViA-GmbH/MiViA-API-py/commit/700d566f4d9243b4a537941747d96d591cc8ac61))
+
 ## [0.4.0](https://github.com/MiViA-GmbH/MiViA-API-py/compare/mivia-v0.3.1...mivia-v0.4.0) (2026-08-31)
 
 
