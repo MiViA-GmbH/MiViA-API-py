@@ -326,7 +326,6 @@ class SyncMiviaClient:
         self,
         job_ids: list[UUID],
         output_path: Path | str,
-        tz_offset: int | None = None,
     ) -> Path:
         """
         Download PDF report.
@@ -334,14 +333,11 @@ class SyncMiviaClient:
         Args:
             job_ids: List of job UUIDs.
             output_path: Path to save PDF.
-            tz_offset: Client timezone offset in minutes.
 
         Returns:
             Path to saved file.
         """
-        return self._run(
-            lambda client: client.download_pdf(job_ids, output_path, tz_offset)
-        )
+        return self._run(lambda client: client.download_pdf(job_ids, output_path))
 
     def download_csv(
         self,

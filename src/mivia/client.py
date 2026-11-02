@@ -482,7 +482,6 @@ class MiviaClient:
         self,
         job_ids: list[UUID],
         output_path: Path | str,
-        tz_offset: int | None = None,
     ) -> Path:
         """
         Queue a PDF report and wait for the worker to render it.
@@ -490,15 +489,11 @@ class MiviaClient:
         Args:
             job_ids: List of job UUIDs.
             output_path: Path to save PDF.
-            tz_offset: Client timezone offset in minutes.
 
         Returns:
             Path to saved file.
         """
-        request = CreateReportRequest(
-            jobs_ids=job_ids,
-            tz_offset=tz_offset,
-        )
+        request = CreateReportRequest(jobs_ids=job_ids)
         return await self._download_report("pdf", request, output_path)
 
     async def download_csv(
