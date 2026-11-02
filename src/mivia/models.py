@@ -36,7 +36,7 @@ class ImageDto(BaseModel):
     filename: str
     thumbnail: str
     original_filename: str = Field(alias="orginalFilename")  # Note: server typo
-    validated: bool
+    validated: bool = True  # Deprecated: server drops it after 2026-12-27
     placeholder: str | None = None
     width: int | None = None
     height: int | None = None

@@ -130,7 +130,6 @@ def upload(
         table.add_column("ID", style="dim")
         table.add_column("Filename")
         table.add_column("Size")
-        table.add_column("Validated")
 
         for img in result:
             size = f"{img.width}x{img.height}" if img.width else "-"
@@ -138,7 +137,6 @@ def upload(
                 str(img.id),
                 img.original_filename,
                 size,
-                "Yes" if img.validated else "No",
             )
 
         console.print(table)
@@ -157,14 +155,12 @@ def images() -> None:
         table.add_column("ID", style="dim")
         table.add_column("Filename")
         table.add_column("Created")
-        table.add_column("Validated")
 
         for img in result:
             table.add_row(
                 str(img.id),
                 img.original_filename,
                 img.created_at.strftime("%Y-%m-%d %H:%M"),
-                "Yes" if img.validated else "No",
             )
 
         console.print(table)
