@@ -261,5 +261,7 @@ class CreateReportRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     jobs_ids: list[UUID] = Field(serialization_alias="jobsIds")
-    tz_offset: int | None = Field(None, serialization_alias="tzOffset")
-    include_images: bool | None = Field(True, serialization_alias="includeImages")
+    tz_offset: int | None = Field(default=None, serialization_alias="tzOffset")
+    include_images: bool | None = Field(
+        default=True, serialization_alias="includeImages"
+    )

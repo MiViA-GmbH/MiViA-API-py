@@ -123,8 +123,7 @@ def upload(
     """Upload image(s)."""
     try:
         client = get_client()
-        forced_list = [forced] * len(files) if forced else None
-        result = client.upload_images(files, forced_list)
+        result = client.upload_images(files, [forced] * len(files))
 
         table = Table(title="Uploaded Images")
         table.add_column("ID", style="dim")

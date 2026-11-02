@@ -25,7 +25,6 @@ jobs:
       - run: uv run ruff format --check src/
       - name: Type check
         run: uv run mypy src/
-        continue-on-error: true  # TODO: fix pre-existing type issues
 
   test:
     name: Test (Python ${{ matrix.python-version }})

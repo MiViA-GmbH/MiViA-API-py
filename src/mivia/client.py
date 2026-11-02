@@ -1,5 +1,6 @@
 import asyncio
 import os
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Self
 from uuid import UUID
@@ -48,9 +49,10 @@ class MiviaClient:
             timeout: Request timeout in seconds.
             proxy: Proxy URL. If None, reads from MIVIA_PROXY env var.
         """
-        self._api_key = api_key or os.environ.get("MIVIA_API_KEY")
-        if not self._api_key:
+        resolved_key = api_key or os.environ.get("MIVIA_API_KEY")
+        if not resolved_key:
             raise AuthenticationError("API key required. Set MIVIA_API_KEY env var.")
+        self._api_key = resolved_key
 
         self._base_url = (
             base_url or os.environ.get("MIVIA_BASE_URL") or "https://app.mivia.ai/api"
@@ -68,7 +70,7 @@ class MiviaClient:
         )
         return self
 
-    async def __aexit__(self, *args) -> None:
+    async def __aexit__(self, *args: object) -> None:
         if self._client:
             await self._client.aclose()
             self._client = None
@@ -122,7 +124,7 @@ class MiviaClient:
 
     async def upload_images(
         self,
-        file_paths: list[Path | str],
+        file_paths: Sequence[Path | str],
         forced: list[bool] | None = None,
         reuse_existing: bool = True,
     ) -> list[ImageDto]:
@@ -234,7 +236,8 @@ class MiviaClient:
             f"/admin/customizations/groups/{customization_id}/resolved-settings"
         )
         self._handle_response(response)
-        return response.json()
+        config: dict[str, Any] = response.json()
+        return config
 
     async def create_jobs(
         self,
@@ -309,7 +312,7 @@ class MiviaClient:
         """
         client = self._ensure_client()
 
-        params: dict = {"idOnly": "true", "source": "API", "since": since}
+        params: dict[str, str] = {"idOnly": "true", "source": "API", "since": since}
         if model_id:
             params["modelId"] = str(model_id)
 
@@ -341,7 +344,7 @@ class MiviaClient:
         """
         client = self._ensure_client()
 
-        params = {
+        params: dict[str, str | int] = {
             "page": page,
             "pageSize": page_size,
             "sortBy": sort_by,
@@ -579,7 +582,7 @@ class MiviaClient:
 
     async def analyze(
         self,
-        file_paths: list[Path | str],
+        file_paths: Sequence[Path | str],
         model_id: UUID,
         customization_id: UUID | None = None,
         wait: bool = True,

@@ -1,7 +1,8 @@
 import asyncio
 import os
+from collections.abc import Awaitable, Callable, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 from uuid import UUID
 
 from mivia.client import MiviaClient
@@ -15,6 +16,8 @@ from mivia.models import (
     JobStatusDto,
     ModelDto,
 )
+
+T = TypeVar("T")
 
 
 class SyncMiviaClient:
@@ -44,18 +47,17 @@ class SyncMiviaClient:
         self._timeout = timeout
         self._proxy = proxy
 
-    def _run(self, coro):
-        return asyncio.run(coro)
+    def _run(self, call: Callable[[MiviaClient], Awaitable[T]]) -> T:
+        async def execute() -> T:
+            async with MiviaClient(
+                api_key=self._api_key,
+                base_url=self._base_url,
+                timeout=self._timeout,
+                proxy=self._proxy,
+            ) as client:
+                return await call(client)
 
-    async def _execute(self, method_name: str, *args, **kwargs):
-        async with MiviaClient(
-            api_key=self._api_key,
-            base_url=self._base_url,
-            timeout=self._timeout,
-            proxy=self._proxy,
-        ) as client:
-            method = getattr(client, method_name)
-            return await method(*args, **kwargs)
+        return asyncio.run(execute())
 
     def upload_image(
         self,
@@ -72,11 +74,11 @@ class SyncMiviaClient:
         Returns:
             Uploaded image DTO.
         """
-        return self._run(self._execute("upload_image", file_path, forced))
+        return self._run(lambda client: client.upload_image(file_path, forced))
 
     def upload_images(
         self,
-        file_paths: list[Path | str],
+        file_paths: Sequence[Path | str],
         forced: list[bool] | None = None,
         reuse_existing: bool = True,
     ) -> list[ImageDto]:
@@ -92,7 +94,7 @@ class SyncMiviaClient:
             List of uploaded image DTOs.
         """
         return self._run(
-            self._execute("upload_images", file_paths, forced, reuse_existing)
+            lambda client: client.upload_images(file_paths, forced, reuse_existing)
         )
 
     def list_images(self) -> list[ImageDto]:
@@ -102,7 +104,7 @@ class SyncMiviaClient:
         Returns:
             List of image DTOs.
         """
-        return self._run(self._execute("list_images"))
+        return self._run(lambda client: client.list_images())
 
     def delete_image(self, image_id: UUID) -> None:
         """
@@ -111,7 +113,7 @@ class SyncMiviaClient:
         Args:
             image_id: Image UUID.
         """
-        return self._run(self._execute("delete_image", image_id))
+        return self._run(lambda client: client.delete_image(image_id))
 
     def list_models(self) -> list[ModelDto]:
         """
@@ -120,7 +122,7 @@ class SyncMiviaClient:
         Returns:
             List of model DTOs.
         """
-        return self._run(self._execute("list_models"))
+        return self._run(lambda client: client.list_models())
 
     def get_model_customizations(self, model_id: UUID) -> list[CustomizationDto]:
         """
@@ -132,7 +134,7 @@ class SyncMiviaClient:
         Returns:
             List of customization DTOs.
         """
-        return self._run(self._execute("get_model_customizations", model_id))
+        return self._run(lambda client: client.get_model_customizations(model_id))
 
     def get_resolved_customization_config(
         self, customization_id: UUID
@@ -147,7 +149,7 @@ class SyncMiviaClient:
             Resolved config JSON.
         """
         return self._run(
-            self._execute("get_resolved_customization_config", customization_id)
+            lambda client: client.get_resolved_customization_config(customization_id)
         )
 
     def create_jobs(
@@ -171,12 +173,8 @@ class SyncMiviaClient:
             List of created job DTOs.
         """
         return self._run(
-            self._execute(
-                "create_jobs",
-                image_ids,
-                model_id,
-                customization_id,
-                customization_config_override,
+            lambda client: client.create_jobs(
+                image_ids, model_id, customization_id, customization_config_override
             )
         )
 
@@ -190,7 +188,7 @@ class SyncMiviaClient:
         Returns:
             Job DTO with results.
         """
-        return self._run(self._execute("get_job", job_id))
+        return self._run(lambda client: client.get_job(job_id))
 
     def get_recent_job_ids(
         self,
@@ -207,7 +205,7 @@ class SyncMiviaClient:
         Returns:
             List of job UUIDs.
         """
-        return self._run(self._execute("get_recent_job_ids", since, model_id))
+        return self._run(lambda client: client.get_recent_job_ids(since, model_id))
 
     def list_jobs(
         self,
@@ -231,7 +229,9 @@ class SyncMiviaClient:
             Job list response with pagination.
         """
         return self._run(
-            self._execute("list_jobs", model_id, page, page_size, sort_by, sort_order)
+            lambda client: client.list_jobs(
+                model_id, page, page_size, sort_by, sort_order
+            )
         )
 
     def get_jobs_status(self, job_ids: list[UUID]) -> list[JobStatusDto]:
@@ -248,7 +248,7 @@ class SyncMiviaClient:
         Returns:
             Current state of each known job.
         """
-        return self._run(self._execute("get_jobs_status", job_ids))
+        return self._run(lambda client: client.get_jobs_status(job_ids))
 
     def list_all_jobs(
         self,
@@ -272,8 +272,8 @@ class SyncMiviaClient:
             List of all job DTOs matching criteria.
         """
         return self._run(
-            self._execute(
-                "list_all_jobs", model_id, status, sort_by, sort_order, page_size
+            lambda client: client.list_all_jobs(
+                model_id, status, sort_by, sort_order, page_size
             )
         )
 
@@ -297,7 +297,9 @@ class SyncMiviaClient:
         Raises:
             JobTimeoutError: If timeout exceeded.
         """
-        return self._run(self._execute("wait_for_job", job_id, timeout, poll_interval))
+        return self._run(
+            lambda client: client.wait_for_job(job_id, timeout, poll_interval)
+        )
 
     def wait_for_jobs(
         self,
@@ -317,7 +319,7 @@ class SyncMiviaClient:
             List of completed job DTOs.
         """
         return self._run(
-            self._execute("wait_for_jobs", job_ids, timeout, poll_interval)
+            lambda client: client.wait_for_jobs(job_ids, timeout, poll_interval)
         )
 
     def download_pdf(
@@ -337,7 +339,9 @@ class SyncMiviaClient:
         Returns:
             Path to saved file.
         """
-        return self._run(self._execute("download_pdf", job_ids, output_path, tz_offset))
+        return self._run(
+            lambda client: client.download_pdf(job_ids, output_path, tz_offset)
+        )
 
     def download_csv(
         self,
@@ -357,12 +361,12 @@ class SyncMiviaClient:
             Path to saved file.
         """
         return self._run(
-            self._execute("download_csv", job_ids, output_path, include_images)
+            lambda client: client.download_csv(job_ids, output_path, include_images)
         )
 
     def analyze(
         self,
-        file_paths: list[Path | str],
+        file_paths: Sequence[Path | str],
         model_id: UUID,
         customization_id: UUID | None = None,
         wait: bool = True,
@@ -382,7 +386,7 @@ class SyncMiviaClient:
             List of job DTOs.
         """
         return self._run(
-            self._execute(
-                "analyze", file_paths, model_id, customization_id, wait, timeout
+            lambda client: client.analyze(
+                file_paths, model_id, customization_id, wait, timeout
             )
         )
