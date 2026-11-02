@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/MiViA-GmbH/MiViA-API-py/compare/mivia-v0.4.0...mivia-v0.5.0) (2026-11-02)
+
+
+### Features
+
+* **client:** add timezone to download_pdf ([10da4e1](https://github.com/MiViA-GmbH/MiViA-API-py/commit/10da4e1e3ca25598add3f4edf43c4b613bd460de))
+
+
+### Bug Fixes
+
+* **client:** remove forced upload option ([33bc1f1](https://github.com/MiViA-GmbH/MiViA-API-py/commit/33bc1f1451d9a685efd5990e81958a6dbecdc297))
+* **client:** remove tz_offset from PDF reports ([892f3aa](https://github.com/MiViA-GmbH/MiViA-API-py/commit/892f3aa055bda610b03aaf3af966bdf0b4078536))
+* **client:** validate API key eagerly in SyncMiviaClient, matching MiviaClient ([700d566](https://github.com/MiViA-GmbH/MiViA-API-py/commit/700d566f4d9243b4a537941747d96d591cc8ac61))
+* **models:** tolerate missing validated field ([2663659](https://github.com/MiViA-GmbH/MiViA-API-py/commit/2663659bf29a5dab0cd506ea92834a60c2eb3379))
+* **types:** resolve mypy strict errors and enforce them in CI ([fe90785](https://github.com/MiViA-GmbH/MiViA-API-py/commit/fe90785338906451dc5415a72e30a4e2550c2dc1))
+
 ## [0.4.0](https://github.com/MiViA-GmbH/MiViA-API-py/compare/mivia-v0.3.1...mivia-v0.4.0) (2026-08-31)
 
 
