@@ -62,24 +62,21 @@ class SyncMiviaClient:
     def upload_image(
         self,
         file_path: Path | str,
-        forced: bool = False,
     ) -> ImageDto:
         """
         Upload single image.
 
         Args:
             file_path: Path to image file.
-            forced: Bypass quality requirements.
 
         Returns:
             Uploaded image DTO.
         """
-        return self._run(lambda client: client.upload_image(file_path, forced))
+        return self._run(lambda client: client.upload_image(file_path))
 
     def upload_images(
         self,
         file_paths: Sequence[Path | str],
-        forced: list[bool] | None = None,
         reuse_existing: bool = True,
     ) -> list[ImageDto]:
         """
@@ -87,14 +84,13 @@ class SyncMiviaClient:
 
         Args:
             file_paths: List of paths to image files.
-            forced: List of forced flags per image.
             reuse_existing: If upload returns empty (duplicate), find existing image.
 
         Returns:
             List of uploaded image DTOs.
         """
         return self._run(
-            lambda client: client.upload_images(file_paths, forced, reuse_existing)
+            lambda client: client.upload_images(file_paths, reuse_existing)
         )
 
     def list_images(self) -> list[ImageDto]:

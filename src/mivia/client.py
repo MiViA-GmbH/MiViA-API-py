@@ -107,25 +107,22 @@ class MiviaClient:
     async def upload_image(
         self,
         file_path: Path | str,
-        forced: bool = False,
     ) -> ImageDto:
         """
         Upload single image.
 
         Args:
             file_path: Path to image file.
-            forced: Bypass quality requirements.
 
         Returns:
             Uploaded image DTO.
         """
-        images = await self.upload_images([file_path], [forced] if forced else None)
+        images = await self.upload_images([file_path])
         return images[0]
 
     async def upload_images(
         self,
         file_paths: Sequence[Path | str],
-        forced: list[bool] | None = None,
         reuse_existing: bool = True,
     ) -> list[ImageDto]:
         """
@@ -133,7 +130,6 @@ class MiviaClient:
 
         Args:
             file_paths: List of paths to image files.
-            forced: List of forced flags per image.
             reuse_existing: If upload returns empty (duplicate), find existing image.
 
         Returns:
@@ -144,11 +140,7 @@ class MiviaClient:
         paths = [Path(p) for p in file_paths]
         files = [("files", (p.name, p.read_bytes())) for p in paths]
 
-        # Server requires forced array (one per file)
-        forced_flags = forced if forced else [False] * len(file_paths)
-        data = {"forced": [str(f).lower() for f in forced_flags]}
-
-        response = await client.post("/image", files=files, data=data)
+        response = await client.post("/image", files=files)
         self._handle_response(response)
         uploaded = [ImageDto.model_validate(img) for img in response.json()]
 

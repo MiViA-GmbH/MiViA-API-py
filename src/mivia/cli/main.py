@@ -116,14 +116,11 @@ def customizations(
 @app.command()
 def upload(
     files: Annotated[list[Path], typer.Argument(help="Image files to upload")],
-    forced: Annotated[
-        bool, typer.Option("--forced", "-f", help="Bypass quality check")
-    ] = False,
 ) -> None:
     """Upload image(s)."""
     try:
         client = get_client()
-        result = client.upload_images(files, [forced] * len(files))
+        result = client.upload_images(files)
 
         table = Table(title="Uploaded Images")
         table.add_column("ID", style="dim")
