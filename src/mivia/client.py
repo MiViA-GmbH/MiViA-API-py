@@ -474,6 +474,7 @@ class MiviaClient:
         self,
         job_ids: list[UUID],
         output_path: Path | str,
+        timezone: str | None = None,
     ) -> Path:
         """
         Queue a PDF report and wait for the worker to render it.
@@ -481,11 +482,12 @@ class MiviaClient:
         Args:
             job_ids: List of job UUIDs.
             output_path: Path to save PDF.
+            timezone: IANA time zone name, e.g. Europe/Berlin. Server default: UTC.
 
         Returns:
             Path to saved file.
         """
-        request = CreateReportRequest(jobs_ids=job_ids)
+        request = CreateReportRequest(jobs_ids=job_ids, timezone=timezone)
         return await self._download_report("pdf", request, output_path)
 
     async def download_csv(

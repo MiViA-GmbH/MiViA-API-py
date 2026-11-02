@@ -261,6 +261,7 @@ class CreateReportRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     jobs_ids: list[UUID] = Field(serialization_alias="jobsIds")
+    timezone: str | None = None
     include_images: bool | None = Field(
         default=True, serialization_alias="includeImages"
     )

@@ -322,6 +322,7 @@ class SyncMiviaClient:
         self,
         job_ids: list[UUID],
         output_path: Path | str,
+        timezone: str | None = None,
     ) -> Path:
         """
         Download PDF report.
@@ -329,11 +330,14 @@ class SyncMiviaClient:
         Args:
             job_ids: List of job UUIDs.
             output_path: Path to save PDF.
+            timezone: IANA time zone name, e.g. Europe/Berlin. Server default: UTC.
 
         Returns:
             Path to saved file.
         """
-        return self._run(lambda client: client.download_pdf(job_ids, output_path))
+        return self._run(
+            lambda client: client.download_pdf(job_ids, output_path, timezone)
+        )
 
     def download_csv(
         self,

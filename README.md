@@ -226,6 +226,6 @@ mivia --proxy http://proxy:8080 config
 | `list_all_jobs(model_id, status)` | List all jobs with auto-pagination and filtering |
 | `wait_for_job(id)` | Poll until job completes |
 | `wait_for_jobs(ids)` | Wait for multiple jobs |
-| `download_pdf(job_ids, path)` | Download PDF report |
+| `download_pdf(job_ids, path, timezone)` | Download PDF report (IANA `timezone`, default UTC) |
 | `download_csv(job_ids, path)` | Download CSV report |
 | `analyze(paths, model_id)` | High-level: upload + run + wait |
